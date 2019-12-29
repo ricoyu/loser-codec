@@ -27,16 +27,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <p>
  * Company: DataSense
  * <p>
+ *
  * @author Rico Yu	ricoyu520@gmail.com
- * @on
  * @version 1.0
+ * @on
  */
 public class AesEncryptUtils {
-
+	
 	private static final Logger logger = LoggerFactory.getLogger(AesEncryptUtils.class);
-
+	
 	private static Cipher cipher = null;
-
+	
 	static {
 		try {
 			cipher = Cipher.getInstance("AES/CBC/NoPadding");
@@ -45,31 +46,31 @@ public class AesEncryptUtils {
 			throw new CipherInitializeException(e);
 		}
 	}
-
+	
 	/**
 	 * 加密
-	 * 
+	 *
 	 * @param data
-	 * @param key	必须16位
+	 * @param key  必须16位
 	 * @return
 	 * @throws Exception
 	 */
 	public static String encrypt(String data, String key) {
 		int blockSize = cipher.getBlockSize();
-
+		
 		byte[] dataBytes = data.getBytes(UTF_8);
 		int plaintextLength = dataBytes.length;
 		if (plaintextLength % blockSize != 0) {
 			plaintextLength = plaintextLength + (blockSize - (plaintextLength % blockSize));
 		}
-
+		
 		byte[] plaintext = new byte[plaintextLength];
 		System.arraycopy(dataBytes, 0, plaintext, 0, dataBytes.length);
-
+		
 		byte[] bytes = key.getBytes(UTF_8);
 		SecretKeySpec keyspec = new SecretKeySpec(bytes, "AES");
 		IvParameterSpec ivspec = new IvParameterSpec(bytes);
-
+		
 		try {
 			cipher.init(Cipher.ENCRYPT_MODE, keyspec, ivspec);
 			byte[] encrypted = cipher.doFinal(plaintext);
@@ -78,26 +79,26 @@ public class AesEncryptUtils {
 			throw new AESEncryptionException(e);
 		}
 	}
-
+	
 	/**
 	 * 解密
-	 * 
+	 *
 	 * @param data
-	 * @param key	必须16位
+	 * @param key  必须16位
 	 * @return
 	 * @throws Exception
 	 */
 	public static String decrypt(String data, String key) {
 		try {
 			byte[] encrypted = Base64.decodeBase64(data);
-
+			
 			Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
 			byte[] bytes = key.getBytes(UTF_8);
 			SecretKeySpec keyspec = new SecretKeySpec(bytes, "AES");
 			IvParameterSpec ivspec = new IvParameterSpec(bytes);
-
+			
 			cipher.init(Cipher.DECRYPT_MODE, keyspec, ivspec);
-
+			
 			byte[] original = cipher.doFinal(encrypted);
 			String originalString = new String(original, UTF_8);
 			return originalString.trim();
@@ -108,10 +109,11 @@ public class AesEncryptUtils {
 	
 	/**
 	 * 生成一个16位IDE随机字符串作为密钥
+	 *
 	 * @return
 	 */
 	public static String key() {
 		return RandomStringUtils.randomAlphanumeric(16);
 	}
-
+	
 }
