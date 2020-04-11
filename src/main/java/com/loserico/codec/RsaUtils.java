@@ -37,7 +37,7 @@ public final class RsaUtils {
 	//RSA 签名算法
 	public static final String ALGORITHM_RSA_SIGN = "SHA256WithRSA";
 	
-	public static final int ALGORITHM_RSA_PRIVATE_KEY_LENGTH = 2048;
+	public static final int KEY_LENGTH = 2048;
 	
 	private RsaUtils() {
 	}
@@ -49,8 +49,8 @@ public final class RsaUtils {
 	 * @return 经过Base64编码后的公私钥
 	 */
 	public static RsaKeyPair initRSAKey(int keysize) {
-		if (keysize < ALGORITHM_RSA_PRIVATE_KEY_LENGTH) {
-			throw new IllegalArgumentException("RSA1024已经不安全了,请使用" + ALGORITHM_RSA_PRIVATE_KEY_LENGTH + "初始化RSA密钥对");
+		if (keysize < KEY_LENGTH) {
+			throw new IllegalArgumentException("RSA1024已经不安全了,请使用" + KEY_LENGTH + "初始化RSA密钥对");
 		}
 		//为RSA算法创建一个KeyPairGenerator对象
 		KeyPairGenerator kpg;
@@ -60,7 +60,7 @@ public final class RsaUtils {
 			throw new IllegalArgumentException("No such algorithm-->[" + ALGORITHM_RSA + "]");
 		}
 		//初始化KeyPairGenerator对象
-		kpg.initialize(ALGORITHM_RSA_PRIVATE_KEY_LENGTH);
+		kpg.initialize(KEY_LENGTH);
 		//生成密匙对
 		KeyPair keyPair = kpg.generateKeyPair();
 		//得到公钥
@@ -213,9 +213,9 @@ public final class RsaUtils {
 	private static byte[] rsaSplitCodec(Cipher cipher, int opmode, byte[] datas) {
 		int maxBlock = 0;
 		if (opmode == Cipher.DECRYPT_MODE) {
-			maxBlock = ALGORITHM_RSA_PRIVATE_KEY_LENGTH / 8;
+			maxBlock = KEY_LENGTH / 8;
 		} else {
-			maxBlock = ALGORITHM_RSA_PRIVATE_KEY_LENGTH / 8 - 11;
+			maxBlock = KEY_LENGTH / 8 - 11;
 		}
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		int offSet = 0;
