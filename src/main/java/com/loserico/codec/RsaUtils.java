@@ -1,6 +1,9 @@
 package com.loserico.codec;
 
+import com.loserico.codec.exception.RsaPublicKeyException;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import java.io.ByteArrayOutputStream;
@@ -11,8 +14,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.text.MessageFormat;
 import java.util.Base64;
 import java.util.Objects;
 
@@ -28,6 +33,8 @@ import java.util.Objects;
  * @version 1.0
  */
 public final class RsaUtils {
+	
+	private static Logger log = LoggerFactory.getLogger(RsaUtils.class);
 	
 	public static final String CHARSET = "UTF-8";
 	
@@ -201,6 +208,49 @@ public final class RsaUtils {
 		} catch (Exception e) {
 			throw new RuntimeException("验签字符串[" + data + "]时遇到异常", e);
 		}
+	}
+	
+	/**
+	 * 根据公钥字符串获取公钥对象
+	 * 完整的公钥是类似这样的
+	 * 
+	 * -----BEGIN PUBLIC KEY-----
+	 * MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtgaTD/42sQ5WZXKBTPUHkv0kib5UJrkoEaLZa/3lcFolse5rKIu8JEbf6YjJP6UOdOc21+r9vJZSaKNOgm5XqaD41o8Zs2eiGa2QX0y5LLfOHm9RIRakm9WR7drYI43XNnEE0XQL0QgoIh6Z9IruPbqpuXa38+FlBobHl5dc5TZK35u+HkYf67v/a4QP1W7S8y2S4xt8vzFa1GvR5eZGL3jp+Mmk5BYtpLT6e94XNh1IAMjGor7jox7fmI4oJ+xr75kmJSS2RvL9yI5QbklPaWfiWQ/sHDZPzuW83RcST9x6tg8GKGW6mGrcKh5We/L9T4slA1ky2QRI9ATS1haD5QIDAQAB
+	 * -----END PUBLIC KEY-----
+	 * 
+	 * publicKey是中间部分的字符串, 不包含头尾的BEGIN/END PUBLIC KEY
+	 * @param publicKey
+	 * @return PublicKey
+	 */
+	public static PublicKey publicKey(String publicKey) {
+		//通过X509编码的Key指令获得公钥对象
+		X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(base64Decode(publicKey));
+		try {
+			KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM_RSA);
+			return keyFactory.generatePublic(x509KeySpec);
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			log.error("根据公钥串[{}]获取公钥对象失败", publicKey, e);
+			throw new RsaPublicKeyException(MessageFormat.format("根据公钥串[{0}]获取公钥对象失败", publicKey), e);
+		}
+	}
+	
+	/**
+	 * 公钥字符串头尾有两行:
+	 * -----BEGIN PUBLIC KEY-----
+	 * MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtgaTD/42sQ5WZXKBTPUHkv0kib5UJrkoEaLZa/3l....
+	 * -----END PUBLIC KEY-----
+	 * 
+	 * 这个方法的作用是去掉头尾, 取中间部分
+	 * @param publicKey
+	 * @return String
+	 */
+	public static String extractPublicKey(String publicKey) {
+		if (publicKey == null) {
+			return null;
+		}
+		return publicKey.replaceAll("\\-*BEGIN PUBLIC KEY\\-*", "")
+				.replaceAll("\\-*END PUBLIC KEY\\-*", "")
+				.trim();
 	}
 	
 	/**
